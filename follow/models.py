@@ -7,7 +7,7 @@ from follow.signals import followed, unfollowed
 import inspect
 
 from django.conf import settings
-User = getattr(settings, 'AUTH_USER_MODEL', 'auth.User')
+AUTH_USER_MODEL = getattr(settings, 'AUTH_USER_MODEL', 'auth.User')
 
 class FollowManager(models.Manager):
     def fname(self, model_or_obj_or_qs):
@@ -69,7 +69,7 @@ class Follow(models.Model):
     This model allows a user to follow any kind of object. The followed
     object is accessible through `Follow.target`.
     """
-    user = models.ForeignKey(User, related_name='following')
+    user = models.ForeignKey(AUTH_USER_MODEL, related_name='following')
 
     datetime = models.DateTimeField(auto_now_add=True)
 
@@ -111,6 +111,12 @@ def unfollow_dispatch(sender, instance, **kwargs):
     # At least that's what the error report looks like and I'm a bit short 
     # on time to investigate properly. 
     # Unfollow handlers should be aware that both target and user can be `None`
+    if hasattr(settings, 'AUTH_USER_MODEL'):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+    else:
+        from django.contrib.auth.models import User
+
     try:
         user = instance.user
     except User.DoesNotExist:
